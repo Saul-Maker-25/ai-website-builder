@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Website Builder Pro - Deploy Ready</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root { font-family: 'Segoe UI', system-ui; line-height: 1.6 }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 20px }
+        .card { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1) }
+        .editor { display: grid; grid-template-columns: 1fr 1fr; gap: 20px }
+        textarea, input, select { padding: 8px; margin: 5px 0; width: 100% }
+        #preview { border: 1px solid #ddd; padding: 20px; min-height: 500px }
+        button { padding: 10px; background: #007bff; color: white; border: none; cursor: pointer }
+        .ai-btn { background: #ff6b6b }
+        .template-btn { background: #4caf50 }
+        .color-picker { width: 50px; height: 40px; padding: 2px }
+        .preview-device { padding: 10px; border: 1px solid #ddd; margin: 5px }
+        .drag-item { padding: 10px; border: 1px solid #ddd; margin: 5px; cursor: move }
+        .hidden { display: none }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🎯 AI Website Builder Pro - Deploy Ready</h1>
+            
+            <!-- User Auth (Simulated) -->
+            <div id="auth-section">
+                <h3>Login/Signup</h3>
+                <input type="email" id="email" placeholder="Email">
+                <input type="password" id="password" placeholder="Password">
+                <button onclick="login()">Login</button>
+                <button onclick="signup()">Signup</button>
+            </div>
+
+            <!-- Main Editor (Hidden until logged in) -->
+            <div id="editor-section" class="hidden">
+                <!-- Template Selection -->
+                <div>
+                    <h3>Choose Template:</h3>
+                    <button class="template-btn" onclick="loadTemplate('business')">Business</button>
+                    <button class="template-btn" onclick="loadTemplate('portfolio')">Portfolio</button>
+                    <button class="template-btn" onclick="loadTemplate('blog')">Blog</button>
+                </div>
+
+                <div class="editor">
+                    <div>
+                        <h3>Editor</h3>
+                        <label>Title: <input type="text" id="title" placeholder="My Awesome Site"></label>
+                        <label>Body Text: <textarea id="body" rows="5" placeholder="Enter your content..."></textarea></label>
+                        <button class="ai-btn" onclick="generateAI()">✨ Generate with AI</button>
+                        
+                        <!-- Drag-and-Drop Elements -->
+                        <h4>Add Elements (Drag to Preview):</h4>
+                        <div class="drag-item" draggable="true" ondragstart="drag(event)" data-type="image">🖼️ Image</div>
+                        <div class="drag-item" draggable="true" ondragstart="drag(event)" data-type="button">🔘 CTA Button</div>
+                        <div class="drag-item" draggable="true" ondragstart="drag(event)" data-type="form">📝 Contact Form</div>
+
+                        <!-- Customization -->
+                        <h4>Customize:</h4>
+                        <label>Primary Color: <input type="color" class="color-picker" id="color" value="#007bff"></label>
+                        <label>Font: 
+                            <select id="font">
+                                <option value="'Segoe UI'">Segoe UI</option>
+                                <option value="Arial">Arial</option>
+                                <option value="Roboto">Roboto</option>
+                            </select>
+                        </label>
+                        <label>Meta Description: <textarea id="meta-desc" rows="2" placeholder="SEO description..."></textarea></label>
+                    </div>
+                    <div>
+                        <h3>Preview</h3>
+                        <div>
+                            <button onclick="previewDevice('desktop')">Desktop</button>
+                            <button onclick="previewDevice('mobile')">Mobile</button>
+                        </div>
+                        <div id="preview" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
+                        <button onclick="exportZIP()">📥 Export as ZIP</button>
+                        <button onclick="saveProject()">💾 Save Project</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+let siteContent = { 
+    title: "", 
+    body: "", 
+    color: "#007bff", 
+    font: "'Segoe UI'", 
+    metaDesc: "",
+    elements: [] // Dragged elements
+};
+let currentTemplate = "business";
+let user = null;
+
+// Simulated User Auth
+function login() {
+    user = { email: document.getElementById('email').value };
+    document.getElementById('auth-section').classList.add('hidden');
+    document.getElementById('editor-section').classList.remove('hidden');
+    loadSavedProject();
+}
+
+function signup() {
+    user = { email: document.getElementById('email').value };
+    alert("Account created! Login to start.");
+}
+
+// Load Saved Project (localStorage)
+function loadSavedProject() {
+    const saved = localStorage.getItem(`project-${user.email}`);
+    if (saved) {
+        const data = JSON.parse(saved);
+        document.getElementById('title').value = data.title;
+        document.getElementById('body').value = data.body;
+        document.getElementById('color').value = data.color;
+        document.getElementById('font').value = data.font;
+        document.getElementById('meta-desc').value = data.metaDesc;
+        siteContent.elements = data.elements || [];
+        updatePreview();
+    }
+}
+
+function saveProject() {
+    const project = {
+        title: document.getElementById('title').value,
+        body: document.getElementById('body').value,
+        color: document.getElementById('color').value,
+        font: document.getElementById('font').value,
+        metaDesc: document.getElementById('meta-desc').value,
+        elements: siteContent.elements
+    };
+    localStorage.setItem(`project-${user.email}`, JSON.stringify(project));
+    alert("Project saved!");
+}
+
+// Load Pre-Built Templates
+function loadTemplate(template) {
+    currentTemplate = template;
+    const templates = {
+        business: {
+            title: "Business Solutions",
+            body: "🚀 Professional services for your company.\n\n📈 Increase efficiency with our tools.\n\n📞 Contact us: contact@business.com",
+            elements: []
+        },
+        portfolio: {
+            title: "My Portfolio",
+            body: "👋 Welcome to my work showcase.\n\n🎨 Check out my latest projects.\n\n📧 Email: artist@portfolio.com",
+            elements: [{ type: "image", content: "https://picsum.photos/400/200" }]
+        },
+        blog: {
+            title: "Tech Blog",
+            body: "📰 Latest tech news and updates.\n\n💡 Insights from industry experts.\n\n✍️ Subscribe for updates.",
+            elements: []
+        }
+    };
+    document.getElementById('title').value = templates[template].title;
+    document.getElementById('body').value = templates[template].body;
+    siteContent.elements = templates[template].elements;
+    updatePreview();
+}
+
+// AI Simulation (Text + Image)
+function generateAI() {
+    // Mock AI-Generated Content
+    const aiText = {
+        business: "🚀 Streamline your operations with our AI-driven platform.\n\n📊 Data-driven insights for better decisions.\n\n🔒 Secure and scalable solutions.",
+        portfolio: "👋 Hi! I'm a full-stack developer.\n\n💻 Check out my open-source projects.\n\n📸 View my design portfolio.",
+        blog: "📰 Breaking: New AI framework released!\n\n💡 Learn how to implement it in 5 steps.\n\n🔍 Read full article →"
+    };
+    
+    // Mock AI-Generated Image (placeholder URL)
+    const aiImage = "https://picsum.photos/600/300?random=1";
+    
+    document.getElementById('title').value = aiText[currentTemplate].split('\n')[0].replace('🚀 ', '');
+    document.getElementById('body').value = aiText[currentTemplate];
+    siteContent.elements.push({ type: "image", content: aiImage });
+    updatePreview();
+}
+
+// Drag-and-Drop Logic
+function drag(e) {
+    e.dataTransfer.setData("text", e.target.getAttribute("data-type"));
+}
+
+function allowDrop(e) {
+    e.preventDefault();
+}
+
+function drop(e) {
+    e.preventDefault();
+    const type = e.dataTransfer.getData("text");
+    siteContent.elements.push({ type, content: "" });
+    updatePreview();
+}
+
+// Update Preview with Customization
+function updatePreview() {
+    siteContent = {
+        title: document.getElementById('title').value,
+        body: document.getElementById('body').value.replace(/\n/g, '<br>'),
+        color: document.getElementById('color').value,
+        font: document.getElementById('font').value,
+        metaDesc: document.getElementById('meta-desc').value,
+        elements: siteContent.elements
+    };
+    
+    const preview = document.getElementById('preview');
+    let elementsHTML = "";
+    
+    // Render Dragged Elements
+    siteContent.elements.forEach(element => {
+        if (element.type === "image") {
+            elementsHTML += `<img src="${element.content || 'https://picsum.photos/400/200'}" style="max-width: 100%; margin: 10px 0">`;
+        } else if (element.type === "button") {
+            elementsHTML += `<button style="background: ${siteContent.color}; padding: 10px; margin: 10px 0">Call to Action</button>`;
+        } else if (element.type === "form") {
+            elementsHTML += `
+                <form style="margin: 10px 0">
+                    <input type="text" placeholder="Name">
+                    <input type="email" placeholder="Email">
+                    <button type="submit">Submit</button>
+                </form>
+            `;
+        }
+    });
+    
+    preview.innerHTML = `
+        <style>
+            .preview-content { 
+                font-family: ${siteContent.font}; 
+                color: ${siteContent.color};
+                max-width: 800px; 
+                margin: 0 auto;
+            }
+            @media (max-width: 768px) {
+                .preview-content { padding: 10px; }
+            }
+        </style>
+        <div class="preview-content">
+            <h1>${siteContent.title}</h1>
+            <p>${siteContent.body}</p>
+            ${elementsHTML}
+            <p style="color: #666; font-size: 0.8em">Generated by AI Website Builder Pro</p>
+            <meta name="description" content="${siteContent.metaDesc}">
+        </div>
+    `;
+}
+
+// Responsive Preview
+function previewDevice(device) {
+    const preview = document.getElementById('preview');
+    preview.style.width = device === 'mobile' ? '375px' : '100%';
+}
+
+// Export to ZIP (Simulated)
+function exportZIP() {
+    const html = `<!DOCTYPE html>
+    <html>
+    <head>
+        <title>${siteContent.title}</title>
+        <meta name="description" content="${siteContent.metaDesc}">
+        <style>
+            body { font-family: ${siteContent.font}; color: ${siteContent.color}; }
+        </style>
+    </head>
+    <body>
+        <h1>${siteContent.title}</h1>
+        <p>${siteContent.body}</p>
+        ${siteContent.elements.map(el => {
+            if (el.type === "image") return `<img src="${el.content}">`;
+            if (el.type === "button") return `<button>Call to Action</button>`;
+            if (el.type === "form") return `<form><input type="text" placeholder="Name"><input type="email" placeholder="Email"><button>Submit</button></form>`;
+            return "";
+        }).join('')}
+        <p style="color: #666; font-size: 0.8em">Generated by AI Website Builder Pro</p>
+    </body>
+    </html>`;
+    
+    // Simulate ZIP download
+    alert("ZIP export simulated! In production, use JSZip to bundle files.");
+    console.log("Exported HTML:", html);
+}
+
+// Initial Load
+loadTemplate('business');
+</script>
+</body>
+</html>
